@@ -1,0 +1,69 @@
+ARG ROOT_IMAGE=paultklab/python:base
+
+FROM $ROOT_IMAGE
+
+# Configure environment
+ENV HOME="/home/${USER}"
+
+USER root
+
+RUN mkdir -p "/home/${USER}/.cache" && \
+    fix-permissions "/home/${USER}/.cache"
+
+USER ${UID}
+
+# Install a range of python data science files
+
+WORKDIR /tmp
+RUN mamba install --yes \
+    'altair' \
+    'beautifulsoup4' \
+    'bokeh' \
+    'bottleneck' \
+    'cloudpickle' \
+    'conda-forge::blas=*=openblas' \
+    'cython' \
+    'dask' \
+    'dill' \
+    'h5py' \
+    'ipympl' \
+    'ipywidgets' \
+    'jupyterlab-git' \
+    'matplotlib-base' \
+    'numba' \
+    'numexpr' \
+    'openpyxl' \
+    'pandas' \
+    'patsy' \
+    'protobuf' \
+    'pytables' \
+    'scikit-image' \
+    'scikit-learn' \
+    'scipy' \
+    'seaborn' \
+    'sqlalchemy' \
+    'statsmodels' \
+    'sympy' \
+    'widgetsnbextension' \
+    'xlrd'
+
+# Install my versions of Open-Ephys, SpikeInterface and Neo
+RUN pip install git+https://github.com/PaulMAnderson/open-ephys.git
+RUN pip install git+https://github.com/PaulMAnderson/python-neo.git
+RUN pip install hdbscan git+https://github.com/PaulMAnderson/spikeinterface.git
+RUN pip install docker
+
+# Install spike sorters
+# Kilosort
+RUN pip install 'kilosort==4.0.33' torch
+# Mountainsort
+RUN pip install mountainsort5
+
+ENV USER="ephys"
+ENV UID="99"
+ENV GID="100"
+ENV GROUP="users"
+ENV PASSWORD="ephys"
+WORKDIR /home/${USER}
+
+USER root

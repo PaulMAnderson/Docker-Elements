@@ -1,0 +1,58 @@
+ARG ROOT_IMAGE=paultklab/python:base
+
+FROM $ROOT_IMAGE
+
+# Copy wandb credentials
+COPY .netrc $HOME/.netrc
+
+# Change to User for ownsership of install packages
+USER ${UID}
+
+# Need to downgrade python
+RUN rm /opt/conda/conda-meta/pinned && \
+    conda init bash && \
+    conda install 'python=3.9.22' -n base
+
+RUN git clone https://github.com/PaulMAnderson/lfads-torch.git lfads
+
+WORKDIR /home/${USER}/lfads
+# WORKDIR lfads
+
+RUN bash install.sh
+
+# Duplicate the base environment 
+RUN conda create -n lfads --clone base
+
+# Initialize conda for bash shell and create the environment
+RUN echo 'conda activate lfads' >> ~/.bashrc
+
+USER root
+# Add the updated entrypoint script that setups up a ray job
+COPY entrypoint.sh /usr/local/bin/
+# Make entrypoint executable
+RUN chmod a+rx /usr/local/bin/entrypoint.sh
+
+# Setup ssh keys
+
+RUN mkdir -p /home/$USER/.ssh && \
+    ssh-keygen -t rsa -f /home/$USER/.ssh/worker -N "" && \
+    ssh-keygen -t rsa -f /home/$USER/.ssh/head && \
+    cat /home/$USER/.ssh/head.pub >> /home/$USER/.ssh/authorized_keys && \
+    cat /home/$USER/.ssh/worker.pub >> /home/$USER/.ssh/authorized_keys
+
+# Document which ports Ray uses
+EXPOSE 6379 8265 10000-10100
+
+# Change user details
+ENV USER="lfads"
+ENV UID="99"
+ENV GID="100"
+ENV GROUP="users"
+ENV PASSWORD="lfads"
+ENV HOME="/home/${USER}"
+
+#Give access to the GPU
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Try and make sure Conda is availalbe
+ENV PATH="/opt/conda/bin:${PATH}"

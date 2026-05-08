@@ -1,0 +1,19 @@
+[supervisord]
+nodaemon=true
+stdout_logfile=/tmp/supervisor.out.log
+stderr_logfile=/tmp/supervisor.err.log
+
+[program:sshd]
+command=/usr/sbin/sshd -D -e
+user=%%USER_NAME%%
+autorestart=true
+stdout_logfile=/tmp/sshd.out.log
+stderr_logfile=/tmp/sshd.err.log
+ 
+[program:jupyter]
+command=/opt/conda/bin/jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
+user=%%USER_NAME%%
+directory=%%HOME_DIR%%
+autorestart=true
+stdout_logfile=/tmp/jupyter.out.log
+stderr_logfile=/tmp/jupyter.err.log

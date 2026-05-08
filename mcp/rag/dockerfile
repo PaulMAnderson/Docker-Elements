@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY src/ ./src/
+COPY scripts/ ./scripts/
+
+# Create data directory for LanceDB
+RUN mkdir -p /data/lancedb /var/log/rag-server
+
+# Set permissions
+RUN chmod +x /app/scripts/start.sh
+
+EXPOSE 8000
+
+# Default to starting both servers
+CMD ["/app/scripts/start.sh"]

@@ -1,0 +1,86 @@
+# Want to a minimal ubuntu install with :
+# Ubuntu 22.04 - Because comes with python 3.10
+# Phy
+# Also want an open gl capable rendering system and a vnc server so I can do phy sorting
+
+FROM ghcr.io/selkies-project/nvidia-glx-desktop:22.04
+
+# Set a bunch of environmental variables
+ENV SHELL=/bin/bash  
+ENV USER=root
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY_SIZEW=1920 
+ENV DISPLAY_SIZEH=1080 
+ENV DISPLAY_REFRESH=60 
+ENV DISPLAY_DPI=96
+ENV DISPLAY_CDEPTH=24
+# ENV UID=99
+# ENV GID=100
+# ENV USERNAME=phy
+# ENV DEFAULT_NAME=ubuntu
+# ENV DEFAULT_UID=1000
+# ENV DEFAULT_GID=1000
+
+ENV UID=1000
+ENV GID=1000
+ENV USERNAME=ubuntuENV UMASK=002
+
+# Change the user id and group to Unraid standards
+USER root
+# RUN usermod -u $UID -g $GID -l $USERNAME $DEFAULT_NAME
+
+# RUN mkdir -p "/home/${USERNAME}"
+# RUN if cp -a "/home/${DEFAULT_NAME}/." "/home/${USERNAME}/"; then \
+#         echo "Success!"; \
+#     else \
+#         echo "Failed to copy data from /home/${DEFAULT_NAME} to /home/${USERNAME}!" && \
+#         echo "Attempting to symlink /home/${DEFAULT_NAME} to /home/${USERNAME}..." && \
+#         if ln -s "/home/${DEFAULT_NAME}" "/home/${USERNAME}"; then \
+#             echo "Success creating symlink!"; \
+#         else \
+#             echo "ERROR: Failed copy data from /home/${DEFAULT_NAME} to /home/${USERNAME} or to create symlink!" && \
+#             exit 1; \
+#         fi; \
+#     fi
+
+# Adjust ownership of the user's home directory and any files owned by the old UID/GID
+# RUN find / -path /proc -prune -o -path /sys -prune -o -path /dev -prune -o -user 1000 -exec chown -h $UID {} \; && \
+#     find / -path /proc -prune -o -path /sys -prune -o -path /dev -prune -o -group 1000 -exec chgrp -h $GID {} \;
+
+# Install some useful tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    rsync \
+    vim \
+    bzip2 \
+    zip \
+    unzip \
+    git \
+    wget \
+    apt-utils \
+    sudo \
+    build-essential
+
+RUN apt-get remove -y python3-pyqt5
+
+# Add user to sudo
+RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN usermod -a -G users ubuntu
+
+# Switch back to the updated user
+USER $USERNAME
+
+# Add umask 002 to the .bashrc
+RUN echo 'umask 002' >> ~/.bashrc
+
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip
+
+# Install phy
+RUN pip install git+https://github.com/cortex-lab/phy.git
+
+RUN pip install -U pyqt5
+
+# Make an empty data processing directory so it is avaliable later
+RUN mkdir -p /mnt/data\ processing
+RUN mkdir -p /mnt/data
