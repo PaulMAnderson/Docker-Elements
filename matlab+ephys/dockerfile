@@ -55,6 +55,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg \
     | gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg && \
+    wget -O /usr/share/keyrings/gpg-pub-moritzbunkus.gpg https://mkvtoolnix.download/gpg-pub-moritzbunkus.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/gpg-pub-moritzbunkus.gpg] https://mkvtoolnix.download/ubuntu/ $(lsb_release -cs) main" \
+    | tee /etc/apt/sources.list.d/mkvtoolnix.list && \
     apt-get update --yes && \
     apt-get upgrade --yes && \
     apt-get install --yes --no-install-recommends \
@@ -79,6 +82,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     cm-super \
     dvipng \
     ffmpeg \
+    mkvtoolnix \
     fonts-liberation \
     pandoc \
     run-one \
@@ -100,7 +104,10 @@ ENV CONDA_DIR=/opt/conda \
     LANG=C.UTF-8 \
     LANGUAGE=C.UTF-8 \
     PATH="/opt/conda/bin:${PATH}" \
-    HOME="/home/${USER}"
+    HOME="/home/${USER}" \
+    NPM_CONFIG_PREFIX="/home/matlab/.npm-global"
+
+ENV PATH="${NPM_CONFIG_PREFIX}/bin:${PATH}"
 
 # Scripts and Permissions
 COPY fix-permissions /usr/local/bin/fix-permissions
@@ -199,8 +206,6 @@ RUN mamba install --yes \
     'widgetsnbextension' \
     'xlrd' \
     'hdbscan' \
-    'docker-py' \
-    'mtscomp' \
     'pydantic' && \
     jupyter server --generate-config && \
     echo "c.PasswordIdentityProvider.hashed_password = 'sha1:41eb0095b22f:18586ae781ed9292674508cdb380469f26a8a1d4'" >> ${HOME}/.jupyter/jupyter_server_config.py && \
@@ -228,6 +233,8 @@ RUN pip install --no-cache-dir \
     open-ephys-python-tools \
     jupyter-matlab-proxy \
     mountainsort5 \
+    docker \
+    mtscomp \
     git+https://github.com/PaulMAnderson/Kilosort.git
 
 # DeepLabCut (Special install for CUDA 12.6 compatibility)
@@ -235,7 +242,9 @@ RUN pip install --no-cache-dir torch torchvision --index-url https://download.py
     pip install --no-cache-dir --pre 'deeplabcut[gui,modelzoo,wandb]==3.0.0rc13'
 
 # Claude Code and Gemini CLI
-RUN curl -fsSL https://claude.ai/install.sh | bash && \
+USER ${UID}
+RUN mkdir -p "${NPM_CONFIG_PREFIX}" && \
+    curl -fsSL https://claude.ai/install.sh | bash && \
     npm install -g @google/gemini-cli
 
 USER root
