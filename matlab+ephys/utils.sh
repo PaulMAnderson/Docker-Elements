@@ -48,7 +48,9 @@ exportInBashrc() {
     while [ $# -gt 0 ]; do
         KEY=$1
         eval "VALUE=\$$KEY"
-        echo "export $KEY=$VALUE" >>~/.bashrc
+        if ! grep -qF "export $KEY=" ~/.bashrc 2>/dev/null; then
+            echo "export $KEY=$VALUE" >>~/.bashrc
+        fi
         shift
     done
 }
@@ -119,7 +121,9 @@ checkLicensing() {
     # Alias `matlab` to append ARGLIST to implement the startup logic. This allows the automatic
     # inclusion of MATLAB configuration such as licensing arguments. For example:
     # `matlab -licmode online`
-    echo "alias matlab=\"matlab ${ARGLIST}\"" >>~/.bashrc
+    if ! grep -qF 'alias matlab=' ~/.bashrc 2>/dev/null; then
+        echo "alias matlab=\"matlab ${ARGLIST}\"" >>~/.bashrc
+    fi
 }
 
 checkSharedMemorySpace() {

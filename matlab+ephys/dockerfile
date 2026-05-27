@@ -120,11 +120,11 @@ RUN chmod a+rx /usr/local/bin/fix-permissions && \
     # Fix line endings
     sed -i 's/\r$//' /usr/local/bin/entrypoint.sh /usr/local/bin/run.sh /usr/local/bin/utils.sh
 
-# Bash/Shell Profile Config
-RUN sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' /etc/skel/.bashrc && \
-    echo 'eval "$(${CONDA_DIR}/bin/conda shell.bash hook)"' >> /etc/skel/.bashrc && \
-    mkdir -p "${CONDA_DIR}" && \
-    chown "${USER}:${GID}" "${CONDA_DIR}"
+# Shell Profile Config
+COPY bashrc /home/${USER}/.bashrc
+RUN mkdir -p "${CONDA_DIR}" && \
+    chown "${USER}:${GID}" "${CONDA_DIR}" && \
+    chown "${UID}:${GID}" /home/${USER}/.bashrc
 
 # SSH Setup
 RUN mkdir -p /var/run/sshd /root/.ssh /etc/ssh && chmod 755 /etc/ssh && \
@@ -219,9 +219,6 @@ RUN mamba install --yes \
 # Shell Customization (Fish)
 USER root
 RUN chsh -s /usr/bin/fish ${USER}
-
-USER ${UID}
-RUN conda init bash
 
 # Pip Installs (Only for packages not reliably on Conda)
 RUN pip install --no-cache-dir \
