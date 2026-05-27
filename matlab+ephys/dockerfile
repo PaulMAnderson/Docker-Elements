@@ -220,8 +220,7 @@ USER root
 RUN chsh -s /usr/bin/fish ${USER}
 
 USER ${UID}
-RUN conda init bash && \
-    mkdir -p "/home/${USER}/.config/fish"
+RUN conda init bash
 
 # Pip Installs (Only for packages not reliably on Conda)
 RUN pip install --no-cache-dir \
@@ -245,11 +244,11 @@ RUN mkdir -p "${NPM_CONFIG_PREFIX}" && \
     curl -fsSL https://claude.ai/install.sh | bash && \
     npm install -g @google/gemini-cli
 
-# Fish config - written last so any installer modifications are overwritten
+# Fish config - static write, no conda/mamba hook (hook exits with 254 in SSH env)
 USER ${UID}
-RUN rm -f "/home/${USER}/.config/fish/config.fish" && \
-    conda init fish && \
-    printf 'set -g fish_greeting ""\nconda activate base\n' >> "/home/${USER}/.config/fish/config.fish"
+RUN mkdir -p "/home/${USER}/.config/fish" && \
+    printf 'if status is-interactive\n    set -g fish_greeting\nend\n\nfish_add_path /opt/conda/bin\nfish_add_path ~/.local/bin\nfish_add_path ~/.npm-global/bin\n' \
+    > "/home/${USER}/.config/fish/config.fish"
 
 USER root
 
