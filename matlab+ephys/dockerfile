@@ -221,9 +221,7 @@ RUN chsh -s /usr/bin/fish ${USER}
 
 USER ${UID}
 RUN conda init bash && \
-    conda init fish && \
-    mkdir -p "/home/${USER}/.config/fish" && \
-    printf 'set -g fish_greeting ""\nconda activate base\n' >> "/home/${USER}/.config/fish/config.fish"
+    mkdir -p "/home/${USER}/.config/fish"
 
 # Pip Installs (Only for packages not reliably on Conda)
 RUN pip install --no-cache-dir \
@@ -246,6 +244,12 @@ USER ${UID}
 RUN mkdir -p "${NPM_CONFIG_PREFIX}" && \
     curl -fsSL https://claude.ai/install.sh | bash && \
     npm install -g @google/gemini-cli
+
+# Fish config - written last so any installer modifications are overwritten
+USER ${UID}
+RUN rm -f "/home/${USER}/.config/fish/config.fish" && \
+    conda init fish && \
+    printf 'set -g fish_greeting ""\nconda activate base\n' >> "/home/${USER}/.config/fish/config.fish"
 
 USER root
 
