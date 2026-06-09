@@ -1,0 +1,28 @@
+ARG MATLAB_RELEASE=r2025b
+FROM mathworks/matlab:$MATLAB_RELEASE
+
+USER root
+
+# Install uv directly
+ADD https://astral.sh/uv/install.sh /tmp/uv-installer.sh
+RUN sh /tmp/uv-installer.sh && rm /tmp/uv-installer.sh
+ENV PATH="/root/.local/bin:$PATH"
+
+# Create a virtual environment inside /opt/venv
+RUN uv venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install setuptools into the venv so setup.py can use it
+RUN uv pip install setuptools
+
+# Navigate to the local MATLAB engine source directory and install it
+RUN cd /opt/matlab/R2025b/extern/engines/python && python setup.py install
+
+# Switch back to the default MATLAB user
+USER matlab
+WORKDIR /home/matlab
+
+# Ensure the virtual environment paths stick around for the runtime user
+ENV PATH="/opt/venv/bin:$PATH"
+ENV MATLABROOT=/opt/matlab/R2025b
+ENV LD_LIBRARY_PATH=/opt/matlab/R2025b/bin/glnxa64
