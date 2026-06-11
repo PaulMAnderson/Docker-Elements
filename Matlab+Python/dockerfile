@@ -12,7 +12,7 @@ ENV PATH="/root/.local/bin:$PATH"
 RUN uv venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install setuptools into the venv so setup.py can use it
+# Install setuptools into the venv so setup.py can run
 RUN uv pip install setuptools
 
 # Navigate to the local MATLAB engine source directory and install it
@@ -26,3 +26,5 @@ WORKDIR /home/matlab
 ENV PATH="/opt/venv/bin:$PATH"
 ENV MATLABROOT=/opt/matlab/R2025b
 ENV LD_LIBRARY_PATH=/opt/matlab/R2025b/bin/glnxa64
+
+# DO NOT override ENTRYPOINT or CMD here. Let the base image handle the initialization.
