@@ -236,16 +236,16 @@ RUN pip install --no-cache-dir \
 RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cu126 && \
     pip install --no-cache-dir --pre 'deeplabcut[gui,modelzoo,wandb]==3.0.0rc13'
 
-# Claude Code and Gemini CLI
+# Claude Code and Antigravity CLI (agy)
 USER ${UID}
 RUN mkdir -p "${NPM_CONFIG_PREFIX}" && \
     curl -fsSL https://claude.ai/install.sh | bash && \
-    npm install -g @google/gemini-cli
+    curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 # Fish config - static write, no conda/mamba hook (hook exits with 254 in SSH env)
 USER ${UID}
 RUN mkdir -p "/home/${USER}/.config/fish" && \
-    printf 'if status is-interactive\n    set -g fish_greeting\nend\n\nfish_add_path /opt/conda/bin\nfish_add_path ~/.local/bin\nfish_add_path ~/.npm-global/bin\n' \
+    printf 'if status is-interactive\n    set -g fish_greeting\nend\n\nfish_add_path /opt/conda/bin\nfish_add_path ~/.local/bin\nfish_add_path ~/.npm-global/bin\n\nset -gx ANTIGRAVITY_USE_VERTEXAI true\nset -gx GOOGLE_CLOUD_PROJECT "project-6ad5b422-ee00-48d6-b7b-cc33e6431804"\nset -gx GOOGLE_CLOUD_LOCATION "eu"\n' \
     > "/home/${USER}/.config/fish/config.fish"
 
 USER root
@@ -258,9 +258,9 @@ EXPOSE $JUPYTER_PORT $MWI_APP_PORT $SI_GUI_PORT
 
 # Runtime Configuration
 ENV MWI_USE_EXISTING_LICENSE=True
-# Placeholder values - pass real values at runtime with -e
-ENV GOOGLE_CLOUD_PROJECT=""
-ENV GOOGLE_CLOUD_LOCATION=global
+ENV ANTIGRAVITY_USE_VERTEXAI=true
+ENV GOOGLE_CLOUD_PROJECT="project-6ad5b422-ee00-48d6-b7b-cc33e6431804"
+ENV GOOGLE_CLOUD_LOCATION="eu"
 ENV DJ_USER=""
 ENV DJ_PASS=""
 
